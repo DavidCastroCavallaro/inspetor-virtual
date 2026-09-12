@@ -1,0 +1,46 @@
+# Inspetor Virtual — aplicação completa (backend + frontend)
+# Subir:   docker compose up -d --build
+# Acessar: http://localhost:8080
+# Parar:   docker compose down
+#
+# A ANTHROPIC_API_KEY e demais configs vêm de backend/.env (não versionado).
+# Se backend/.env não existir, copie de backend/.env.example — sem chave o app
+# roda em MODO MOCK (custo zero).
+
+name: inspetor-virtual
+
+services:
+  backend:
+    build: ./backend
+    image: inspetor-virtual-backend
+    container_name: inspetor-backend
+    env_file:
+      - ./backend/.env
+    environment:
+      PORT: "8787"
+    volumes:
+      # persiste projetos/capturas/resultados e a planilha de exemplo no host
+      - ./backend/data:/app/data
+    ports:
+      - "8787:8787"          # API acessível direto (opcional; o frontend usa a rede interna)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:8787/api/health').then(r=>{process.exit(r.ok?0:1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build: ./frontend
+    image: inspetor-virtual-frontend
+    container_name: inspetor-frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"            # PWA em http://localhost:8080
+    restart: unless-stopped
+
+# Câmera/microfone no celular exigem HTTPS. Em produção, ponha um reverse proxy
+# com TLS (Caddy, Traefik, nginx) na frente do serviço frontend, ou exponha via
+# túnel (cloudflared/ngrok) apontando para a porta 8080.

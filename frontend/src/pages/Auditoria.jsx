@@ -12,6 +12,7 @@ export default function Auditoria({ online, projectId }) {
   );
   const [open, setOpen] = useState(null);
   const [msg, setMsg] = useState('');
+  const [busca, setBusca] = useState('');
 
   useEffect(() => { if (online && projectId) refreshResultsFromServer(); }, [online, projectId]);
 
@@ -34,6 +35,11 @@ export default function Auditoria({ online, projectId }) {
 
   const total = results.length;
   const avg = (k) => (total ? (results.reduce((a, r) => a + (r[k] || 0), 0) / total).toFixed(1) : '0');
+  const q = busca.trim().toLowerCase();
+  const resultsVisiveis = q
+    ? results.filter((r) => [r.codigo, r.patrimonio, r.descricao, r.numeroSerie]
+        .some((v) => String(v || '').toLowerCase().includes(q)))
+    : results;
 
   return (
     <div className="space-y-4">
@@ -54,8 +60,17 @@ export default function Auditoria({ online, projectId }) {
       </div>
       {msg && <p className="text-sm font-medium text-brand-dark">{msg}</p>}
 
+      {results.length > 5 && (
+        <input
+          className="input"
+          placeholder="Filtrar por código, patrimônio, descrição ou nº série..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+      )}
+
       <div className="space-y-2">
-        {results.map((r) => (
+        {resultsVisiveis.map((r) => (
           <div key={r.id} className="card overflow-hidden">
             <button
               className="w-full px-4 py-3 flex items-center gap-3 text-left"
@@ -64,6 +79,7 @@ export default function Auditoria({ online, projectId }) {
               <div className="flex-1 min-w-0">
                 <div className="font-semibold truncate">{r.codigo} — {r.fabricante} {r.modelo}</div>
                 <div className="text-xs text-slate-500 truncate">
+                  {r.patrimonio ? `Pat. ${r.patrimonio} · ` : ''}
                   {r.potencia} · {r.condicao} · rem. {r.vidaRemanescenteAnos}a · dep. {r.depreciacaoPct}%
                 </div>
               </div>
@@ -74,7 +90,7 @@ export default function Auditoria({ online, projectId }) {
               <div className="px-4 pb-4 space-y-3 border-t border-slate-100 pt-3 text-sm">
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {[
-                    ['Nº Série', r.numeroSerie], ['RPM', r.rpm], ['Voltagem', r.voltagem],
+                    ['Patrimônio', r.patrimonio], ['Nº Série', r.numeroSerie], ['RPM', r.rpm], ['Voltagem', r.voltagem],
                     ['Ano', r.anoFabricacao], ['Vida útil total', r.vidaUtilTotalAnos + 'a'],
                     ['Idade', r.idadeAnos + 'a'], ['Confiança IA', r.confianca != null ? Math.round(r.confianca * 100) + '%' : '—'],
                     ['Motor IA', r.ai?.visionProvider],
@@ -129,6 +145,9 @@ export default function Auditoria({ online, projectId }) {
           <div className="card px-4 py-8 text-center text-sm text-slate-400">
             Nenhum ativo processado. Faça capturas e toque em <b>Sync</b>.
           </div>
+        )}
+        {results.length > 0 && !resultsVisiveis.length && (
+          <div className="card px-4 py-8 text-center text-sm text-slate-400">Nenhum ativo bate com esse filtro.</div>
         )}
       </div>
     </div>

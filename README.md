@@ -1,5 +1,7 @@
 # Inspetor Virtual
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 PWA offline-first para vistoria industrial de ativos com pipeline de IA e roteamento inteligente de custo.
 
 ## Rodar (2 terminais)
@@ -42,3 +44,6 @@ Para IA real, preencha `backend/.env` (copie de `.env.example`):
 4. **Sync** — envia lote → pipeline IA (OCR+voz → Matcher → Evaluator)
 5. **Dashboard** — 🟢 Confirmados / 🟡 Divergentes / 🔴 Pendentes / 🟠 Novos
 6. **Auditoria** — revisar, "Aceitar IA" ou "Manter Cadastro", exportar Excel + PDF do projeto
+
+## Licença
+[MIT](LICENSE) — use, copie e modifique livremente. Nunca comite `backend/.env` (chaves de API).

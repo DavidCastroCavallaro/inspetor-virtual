@@ -11,26 +11,60 @@ const HEADER_MAP = {
   localizacao: 'localizacao', 'localização': 'localizacao', local: 'localizacao', location: 'localizacao',
   rpm: 'rpm', voltagem: 'voltagem', tensao: 'voltagem', 'tensão': 'voltagem',
   ano: 'ano', year: 'ano', 'ano fabricacao': 'ano', 'ano de fabricação': 'ano',
+
+  // identificador patrimonial (numero de tombamento/inventario do ativo fixo)
+  patrimonio: 'patrimonio', 'patrimônio': 'patrimonio',
+  patrimonial: 'patrimonio', 'bem patrimonial': 'patrimonio',
+  'numero patrimonial': 'patrimonio', 'número patrimonial': 'patrimonio',
+  'n patrimonial': 'patrimonio', 'no patrimonial': 'patrimonio',
+  'ativo n': 'patrimonio', 'ativo no': 'patrimonio',
+  'ativo numero': 'patrimonio', 'ativo número': 'patrimonio',
+  'numero do ativo': 'patrimonio', 'número do ativo': 'patrimonio',
+  'n do ativo': 'patrimonio', 'no do ativo': 'patrimonio',
+  inventario: 'patrimonio', 'inventário': 'patrimonio',
+  'n inventario': 'patrimonio', 'n inventário': 'patrimonio',
+  'numero inventario': 'patrimonio', 'número inventário': 'patrimonio',
+  tombamento: 'patrimonio', 'n tombamento': 'patrimonio',
+  plaqueta: 'patrimonio', 'n plaqueta': 'patrimonio',
 };
 
 function norm(s) {
-  return String(s || '').trim().toLowerCase();
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[º°]/g, '')
+    .replace(/\s+/g, ' ');
 }
 
 export function parseExpectedXlsx(buffer) {
   const wb = xlsx.read(buffer, { type: 'buffer' });
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows = xlsx.utils.sheet_to_json(ws, { defval: '' });
+
+  const used = new Set();
   return rows.map((raw, i) => {
-    const item = { rpm: '', voltagem: '', ano: '' };
+    const item = { rpm: '', voltagem: '', ano: '', patrimonio: '' };
     for (const [k, v] of Object.entries(raw)) {
       const key = HEADER_MAP[norm(k)];
       if (key) item[key] = typeof v === 'string' ? v.trim() : v;
     }
-    if (!item.codigo) item.codigo = `LINHA-${i + 1}`;
+    item.descricao = String(item.descricao || '').trim();
+    item.patrimonio = String(item.patrimonio || '').trim();
+
+    // identificador: codigo explicito -> patrimonio -> descricao -> ultimo recurso
+    let codigo = String(item.codigo || '').trim() || item.patrimonio || item.descricao || `Linha ${i + 1}`;
+    // evita colisao (ex: duas linhas com a mesma descricao e sem codigo/patrimonio)
+    if (used.has(codigo.toLowerCase())) {
+      let n = 2;
+      while (used.has(`${codigo} (${n})`.toLowerCase())) n++;
+      codigo = `${codigo} (${n})`;
+    }
+    used.add(codigo.toLowerCase());
+
     return {
-      codigo: String(item.codigo),
-      descricao: item.descricao || '',
+      codigo,
+      descricao: item.descricao,
+      patrimonio: item.patrimonio,
       fabricante: item.fabricante || '',
       modelo: item.modelo || '',
       potencia: String(item.potencia || ''),
@@ -45,6 +79,7 @@ export function parseExpectedXlsx(buffer) {
 export function buildInventoryXlsx(results) {
   const data = results.map((r) => ({
     'Código': r.codigo,
+    'Patrimônio': r.patrimonio,
     'Status': r.statusLabel,
     'Descrição': r.descricao,
     'Fabricante': r.fabricante,

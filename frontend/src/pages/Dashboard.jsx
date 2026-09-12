@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { refreshExpectedFromServer, refreshResultsFromServer } from '../lib/sync.js';
+import { titulo } from '../lib/format.js';
 
 export default function Dashboard({ online, projectId, hasProjects }) {
+  const [busca, setBusca] = useState('');
   const expected = useLiveQuery(
     () => (projectId ? db.expected.where('projectId').equals(projectId).toArray() : []),
     [projectId], []
@@ -38,6 +40,12 @@ export default function Dashboard({ online, projectId, hasProjects }) {
   const byCode = Object.fromEntries(results.map((r) => [String(r.codigo).toLowerCase(), r]));
   const novos = results.filter((r) => r.status === 'novo');
   const rows = expected.map((e) => ({ ...e, result: byCode[String(e.codigo).toLowerCase()] || null }));
+
+  const q = busca.trim().toLowerCase();
+  const matches = (v) => [v.codigo, v.patrimonio, v.descricao, v.localizacao]
+    .some((f) => String(f || '').toLowerCase().includes(q));
+  const rowsVisiveis = q ? rows.filter(matches) : rows;
+  const novosVisiveis = q ? novos.filter(matches) : novos;
 
   const count = {
     confirmado: rows.filter((r) => r.result?.status === 'confirmado').length,
@@ -84,12 +92,23 @@ export default function Dashboard({ online, projectId, hasProjects }) {
         </div>
       )}
 
+      {expected.length > 5 && (
+        <input
+          className="input"
+          placeholder="Filtrar por código, patrimônio, descrição ou local..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
+      )}
+
       <div className="card divide-y divide-slate-100">
-        {rows.map((r) => (
+        {rowsVisiveis.map((r) => (
           <div key={r.codigo} className="px-4 py-3 flex items-center gap-3">
             <div className="flex-1 min-w-0">
-              <div className="font-semibold truncate">{r.codigo} — {r.descricao}</div>
-              <div className="text-xs text-slate-500 truncate">{r.localizacao || '—'}</div>
+              <div className="font-semibold truncate">{titulo(r.codigo, r.descricao)}</div>
+              <div className="text-xs text-slate-500 truncate">
+                {r.patrimonio ? `Pat. ${r.patrimonio} · ` : ''}{r.localizacao || '—'}
+              </div>
               {r.result?.divergencias?.length > 0 && (
                 <div className="text-[11px] text-yellow-700 truncate">⚠ {r.result.divergencias[0]}</div>
               )}
@@ -97,18 +116,20 @@ export default function Dashboard({ online, projectId, hasProjects }) {
             <StatusBadge status={r.result?.status || 'pendente'} />
           </div>
         ))}
-        {novos.map((r) => (
+        {novosVisiveis.map((r) => (
           <div key={r.id} className="px-4 py-3 flex items-center gap-3 bg-orange-50/50">
             <div className="flex-1 min-w-0">
-              <div className="font-semibold truncate">{r.codigo} — {r.descricao}</div>
+              <div className="font-semibold truncate">{titulo(r.codigo, r.descricao)}</div>
               <div className="text-xs text-slate-500 truncate">Fora da lista prévia</div>
             </div>
             <StatusBadge status="novo" />
           </div>
         ))}
-        {!expected.length && !novos.length && (
+        {!rowsVisiveis.length && !novosVisiveis.length && (
           <div className="px-4 py-8 text-center text-sm text-slate-400">
-            Importe a lista prévia em <Link className="text-brand font-semibold" to="/pre-vistoria">Lista</Link>.
+            {expected.length || novos.length
+              ? 'Nenhum ativo bate com esse filtro.'
+              : <>Importe a lista prévia em <Link className="text-brand font-semibold" to="/pre-vistoria">Lista</Link>.</>}
           </div>
         )}
       </div>

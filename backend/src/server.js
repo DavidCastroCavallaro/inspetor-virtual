@@ -146,6 +146,7 @@ app.post('/api/process', async (req, res) => {
       id: cap.id || `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       capturedAt: cap.capturedAt || new Date().toISOString(),
       codigo,
+      patrimonio: m.matched?.patrimonio || '',
       status: m.status,
       statusLabel: m.statusLabel,
       descricao,
