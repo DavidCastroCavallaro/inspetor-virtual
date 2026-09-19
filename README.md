@@ -14,14 +14,14 @@ npm run seed     # gera data/ativos_exemplo.xlsx
 npm run dev
 ```
 
-**Frontend** (PWA — porta 3000):
+**Frontend** (PWA — porta 7000):
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Abra: **http://localhost:3000**
+Abra: **https://localhost:7000**
 
 ## Modo MOCK (padrão)
 Sem chaves de API no `backend/.env`, o app roda 100% simulado (custo zero).

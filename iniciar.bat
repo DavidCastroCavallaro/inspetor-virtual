@@ -32,13 +32,13 @@ if not exist "%~dp0backend\.env" (
 echo Iniciando a API (porta 8787)...
 start "Inspetor Virtual - API 8787" /D "%~dp0backend" cmd /k "npm run dev"
 
-echo Iniciando o site / PWA (porta 3000)...
-start "Inspetor Virtual - PWA 3000" /D "%~dp0frontend" cmd /k "npm run dev"
+echo Iniciando o site / PWA (porta 7000)...
+start "Inspetor Virtual - PWA 7000" /D "%~dp0frontend" cmd /k "npm run dev"
 
 echo.
 echo Duas janelas foram abertas. Aguarde ~10 segundos e acesse:
-echo    https://localhost:3000
+echo    https://localhost:7000
 echo.
 echo Para desligar o app: feche as duas janelas.
 timeout /t 10 >nul
-start "" "https://localhost:3000"
+start "" "https://localhost:7000"

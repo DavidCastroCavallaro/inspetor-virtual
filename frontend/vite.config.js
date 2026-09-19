@@ -10,10 +10,11 @@ const useHttps = process.env.HTTPS !== 'false';
 export default defineConfig({
   server: {
     host: true,            // expõe na rede local (0.0.0.0) — acesse pelo IP do PC
-    port: 3000,
+    port: 7000,            // 3000/3001 costumam estar ocupadas por outros containers (Docker etc.)
+    strictPort: true,      // falha em vez de pular silenciosamente pra outra porta
     proxy: { '/api': 'http://localhost:8787' },
   },
-  preview: { host: true, port: 3000 },
+  preview: { host: true, port: 7000, strictPort: true },
   plugins: [
     react(),
     ...(useHttps ? [basicSsl()] : []),
