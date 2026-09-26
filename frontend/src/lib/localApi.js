@@ -117,7 +117,10 @@ export const localApi = {
       const descricao = m.matched?.descricao || `${extracted.fabricante} ${extracted.modelo}`.trim() || 'Ativo não cadastrado';
       const localizacao = m.matched?.localizacao || cap.localizacao || '';
 
-      const ev = evaluate({ descricao, anoFabricacao: extracted.anoFabricacao, condicao: extracted.condicao });
+      const ev = evaluate({
+        descricao, anoFabricacao: extracted.anoFabricacao, condicao: extracted.condicao,
+        estadoConservacao: cap.estadoConservacao || null,
+      });
 
       const row = {
         id: cap.id || nanoid(),
@@ -175,7 +178,9 @@ export const localApi = {
     }
     if (patch && typeof patch === 'object') Object.assign(r, patch);
 
-    Object.assign(r, evaluate({ descricao: r.descricao, anoFabricacao: r.anoFabricacao, condicao: r.condicao }));
+    Object.assign(r, evaluate({
+      descricao: r.descricao, anoFabricacao: r.anoFabricacao, condicao: r.condicao, estadoConservacao: r.estadoConservacao,
+    }));
     r.auditado = true;
     r.decisao = decisao || r.decisao;
     await db.results.put(r);

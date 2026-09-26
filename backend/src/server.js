@@ -140,6 +140,7 @@ app.post('/api/process', async (req, res) => {
       descricao,
       anoFabricacao: extracted.anoFabricacao,
       condicao: extracted.condicao,
+      estadoConservacao: cap.estadoConservacao || null,
     });
 
     const row = {
@@ -205,7 +206,9 @@ app.put('/api/results/:id', (req, res) => {
   }
   if (patch && typeof patch === 'object') Object.assign(r, patch);
 
-  Object.assign(r, evaluate({ descricao: r.descricao, anoFabricacao: r.anoFabricacao, condicao: r.condicao }));
+  Object.assign(r, evaluate({
+    descricao: r.descricao, anoFabricacao: r.anoFabricacao, condicao: r.condicao, estadoConservacao: r.estadoConservacao,
+  }));
   r.auditado = true;
   r.decisao = decisao || r.decisao;
   save(db);

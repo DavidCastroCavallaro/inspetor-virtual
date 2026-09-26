@@ -4,6 +4,7 @@ import { db } from '../db.js';
 import { api } from '../lib/api.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { refreshResultsFromServer } from '../lib/sync.js';
+import { ESTADOS_CONSERVACAO, estadoLabel } from '../lib/conservacao.js';
 
 export default function Auditoria({ online, projectId }) {
   const results = useLiveQuery(
@@ -80,7 +81,7 @@ export default function Auditoria({ online, projectId }) {
                 <div className="font-semibold truncate">{r.codigo} — {r.fabricante} {r.modelo}</div>
                 <div className="text-xs text-slate-500 truncate">
                   {r.patrimonio ? `Pat. ${r.patrimonio} · ` : ''}
-                  {r.potencia} · {r.condicao} · rem. {r.vidaRemanescenteAnos}a · dep. {r.depreciacaoPct}%
+                  {r.potencia} · {r.estadoConservacao ? r.estadoConservacao.toUpperCase() : r.condicao} · rem. {r.vidaRemanescenteAnos}a · dep. {r.depreciacaoPct}%
                 </div>
               </div>
               <StatusBadge status={r.status} label={r.statusLabel} />
@@ -123,7 +124,7 @@ export default function Auditoria({ online, projectId }) {
                 )}
 
                 <div className="flex items-center gap-2">
-                  <label className="text-xs text-slate-500">Condição:</label>
+                  <label className="text-xs text-slate-500 shrink-0">Condição (IA):</label>
                   <select
                     className="input !py-1 text-xs flex-1"
                     value={r.condicao}
@@ -132,6 +133,23 @@ export default function Auditoria({ online, projectId }) {
                     {['Bom', 'Regular', 'Ruim'].map((c) => <option key={c}>{c}</option>)}
                   </select>
                 </div>
+
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-slate-500 shrink-0">Estado observado:</label>
+                  <select
+                    className="input !py-1 text-xs flex-1"
+                    value={r.estadoConservacao || ''}
+                    onChange={(e) => act(r.id, { patch: { estadoConservacao: e.target.value || null } })}
+                  >
+                    <option value="">— usar Condição (IA) —</option>
+                    {ESTADOS_CONSERVACAO.map((e) => (
+                      <option key={e.codigo} value={e.codigo}>{e.codigo.toUpperCase()} — {e.label}</option>
+                    ))}
+                  </select>
+                </div>
+                {r.estadoConservacao && (
+                  <p className="text-[11px] text-slate-400">{estadoLabel(r.estadoConservacao)}</p>
+                )}
 
                 <textarea
                   className="input text-xs" rows={2} defaultValue={r.observacao}

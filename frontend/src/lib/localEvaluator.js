@@ -1,5 +1,6 @@
 /* Evaluator Agent - vida util / depreciacao por tabela fixa (IBAPE / Ross-Heidecke).
    Copia do backend/src/evaluator.js — usado no modo standalone (sem servidor). */
+import { ESTADOS_CONSERVACAO } from './conservacao.js';
 
 const VIDA_UTIL = [
   { re: /transformador/i, anos: 30 },
@@ -20,14 +21,17 @@ function vidaUtilPorTipo(desc) {
   return VIDA_UTIL_DEFAULT;
 }
 
-export function evaluate({ descricao, anoFabricacao, condicao }, anoBase = new Date().getFullYear()) {
+export function evaluate({ descricao, anoFabricacao, condicao, estadoConservacao }, anoBase = new Date().getFullYear()) {
   const vidaUtilTotalAnos = vidaUtilPorTipo(descricao);
   const ano = parseInt(String(anoFabricacao).match(/\d{4}/)?.[0] || '', 10);
   const idadeAnos = Number.isFinite(ano) ? Math.max(0, anoBase - ano) : Math.round(vidaUtilTotalAnos * 0.4);
 
   const depFisica = Math.min(1, idadeAnos / vidaUtilTotalAnos);
-  const cond = FATOR_ESTADO[condicao] ?? FATOR_ESTADO.Regular;
-  const k = Math.min(1, depFisica + (1 - depFisica) * cond);
+
+  const estado = ESTADOS_CONSERVACAO.find((e) => e.codigo === estadoConservacao);
+  const fatorEstado = estado ? estado.fator : (FATOR_ESTADO[condicao] ?? FATOR_ESTADO.Regular);
+
+  const k = Math.min(1, depFisica + (1 - depFisica) * fatorEstado);
 
   const depreciacaoPct = Math.round(k * 1000) / 10;
   const vidaRemanescenteAnos = Math.max(0, Math.round((vidaUtilTotalAnos * (1 - k)) * 10) / 10);
@@ -37,6 +41,7 @@ export function evaluate({ descricao, anoFabricacao, condicao }, anoBase = new D
     idadeAnos,
     depreciacaoPct,
     vidaRemanescenteAnos,
+    estadoConservacao: estado?.codigo || null,
     metodo: 'Linha reta + Ross-Heidecke (estado) - ref. IBAPE',
   };
 }

@@ -42,7 +42,7 @@ export function buildReportPdfBlob(results) {
     line(`${i + 1}. [${r.statusLabel}] ${r.codigo} — ${r.fabricante} ${r.modelo}`.trim(), 11, [0, 0, 0], 14);
     line(`Descrição: ${r.descricao || '-'}   •   Localização: ${r.localizacao || '-'}`, 9, [51, 51, 51], 12);
     line(`Potência: ${r.potencia || '-'}   RPM: ${r.rpm || '-'}   Voltagem: ${r.voltagem || '-'}   Série: ${r.numeroSerie || '-'}`, 9, [51, 51, 51], 12);
-    line(`Condição: ${r.condicao || '-'}   •   Vida útil total: ${r.vidaUtilTotalAnos}a   •   Idade: ${r.idadeAnos}a   •   Remanescente: ${r.vidaRemanescenteAnos}a   •   Depreciação: ${r.depreciacaoPct}%`, 9, [51, 51, 51], 12);
+    line(`Condição (IA): ${r.condicao || '-'}${r.estadoConservacao ? '   •   Estado observado: ' + r.estadoConservacao.toUpperCase() : ''}   •   Vida útil total: ${r.vidaUtilTotalAnos}a   •   Idade: ${r.idadeAnos}a   •   Remanescente: ${r.vidaRemanescenteAnos}a   •   Depreciação: ${r.depreciacaoPct}%`, 9, [51, 51, 51], 12);
     if (r.divergencias?.length) line(`Divergências: ${r.divergencias.join('; ')}`, 9, [180, 83, 9], 12);
     if (r.observacao) line(`Obs. perito: ${r.observacao}`, 9, [29, 78, 216], 12);
     y += 8;

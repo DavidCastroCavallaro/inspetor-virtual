@@ -5,6 +5,7 @@ import { compressImage, base64ToUrl } from '../lib/image.js';
 import { VoiceRecorder } from '../lib/audio.js';
 import { titulo } from '../lib/format.js';
 import { STANDALONE } from '../lib/api.js';
+import { ESTADOS_CONSERVACAO } from '../lib/conservacao.js';
 
 export default function Captura({ onSaved, projectId }) {
   const expected = useLiveQuery(
@@ -24,6 +25,7 @@ export default function Captura({ onSaved, projectId }) {
   const [photo, setPhoto] = useState(null); // {base64,mime,bytes,width,height}
   const [audio, setAudio] = useState(null); // {base64,mime}
   const [obs, setObs] = useState('');
+  const [estadoConservacao, setEstadoConservacao] = useState('');
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState('');
   const camRef = useRef();
@@ -81,11 +83,12 @@ export default function Captura({ onSaved, projectId }) {
       audioBase64: audio?.base64 || null,
       audioMime: audio?.mime || null,
       observacao: obs,
+      estadoConservacao: estadoConservacao || null,
       localizacao: selected?.localizacao || '',
       status: 'pendente',
       capturedAt: new Date().toISOString(),
     });
-    setPhoto(null); setAudio(null); setObs(''); setHint(''); setBusy('');
+    setPhoto(null); setAudio(null); setObs(''); setHint(''); setEstadoConservacao(''); setBusy('');
     onSaved?.();
   }
 
@@ -204,6 +207,23 @@ export default function Captura({ onSaved, projectId }) {
             ⚠️ Modo sem servidor: o áudio grava só p/ conferência, mas não é transcrito automaticamente — digite a observação pra IA usar.
           </p>
         )}
+      </div>
+
+      <div className="card p-3 space-y-2">
+        <label className="text-sm font-semibold">🏗️ Estado de conservação observado (opcional)</label>
+        <select
+          className="input"
+          value={estadoConservacao}
+          onChange={(e) => setEstadoConservacao(e.target.value)}
+        >
+          <option value="">— deixar a IA estimar pela foto/observação —</option>
+          {ESTADOS_CONSERVACAO.map((e) => (
+            <option key={e.codigo} value={e.codigo}>{e.codigo.toUpperCase()} — {e.label}</option>
+          ))}
+        </select>
+        <p className="text-[11px] text-slate-400">
+          Sua avaliação direta (escala Heidecke/IBAPE) tem prioridade sobre a estimativa da IA no cálculo de vida útil.
+        </p>
       </div>
 
       <button className="btn-primary w-full text-base py-3" onClick={save} disabled={!!busy}>

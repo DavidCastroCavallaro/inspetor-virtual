@@ -24,6 +24,7 @@ export async function syncPending(onProgress = () => {}) {
     audioBase64: c.audioBase64 || null,
     audioMime: c.audioMime || 'audio/webm',
     observacao: c.observacao || '',
+    estadoConservacao: c.estadoConservacao || null,
     localizacao: c.localizacao || '',
     capturedAt: c.capturedAt,
   }));

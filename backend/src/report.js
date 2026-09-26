@@ -32,7 +32,7 @@ export function buildReportPdf(results, res) {
     doc.fontSize(9).fillColor('#333');
     doc.text(`Descrição: ${r.descricao || '-'}   •   Localização: ${r.localizacao || '-'}`);
     doc.text(`Potência: ${r.potencia || '-'}   RPM: ${r.rpm || '-'}   Voltagem: ${r.voltagem || '-'}   Série: ${r.numeroSerie || '-'}`);
-    doc.text(`Condição: ${r.condicao || '-'}   •   Vida útil total: ${r.vidaUtilTotalAnos}a   •   Idade: ${r.idadeAnos}a   •   Remanescente: ${r.vidaRemanescenteAnos}a   •   Depreciação: ${r.depreciacaoPct}%`);
+    doc.text(`Condição (IA): ${r.condicao || '-'}${r.estadoConservacao ? '   •   Estado observado: ' + r.estadoConservacao.toUpperCase() : ''}   •   Vida útil total: ${r.vidaUtilTotalAnos}a   •   Idade: ${r.idadeAnos}a   •   Remanescente: ${r.vidaRemanescenteAnos}a   •   Depreciação: ${r.depreciacaoPct}%`);
     if (r.divergencias?.length) doc.fillColor('#b45309').text(`Divergências: ${r.divergencias.join('; ')}`);
     if (r.observacao) doc.fillColor('#1d4ed8').text(`Obs. perito: ${r.observacao}`);
     doc.fillColor('#000').moveDown(0.6);
