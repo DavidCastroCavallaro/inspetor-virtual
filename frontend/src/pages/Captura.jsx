@@ -4,6 +4,7 @@ import { db } from '../db.js';
 import { compressImage, base64ToUrl } from '../lib/image.js';
 import { VoiceRecorder } from '../lib/audio.js';
 import { titulo } from '../lib/format.js';
+import { STANDALONE } from '../lib/api.js';
 
 export default function Captura({ onSaved, projectId }) {
   const expected = useLiveQuery(
@@ -198,6 +199,11 @@ export default function Captura({ onSaved, projectId }) {
           className="input" rows={2} placeholder="ou digite a observação..."
           value={obs} onChange={(e) => setObs(e.target.value)}
         />
+        {STANDALONE && (
+          <p className="text-[11px] text-amber-600">
+            ⚠️ Modo sem servidor: o áudio grava só p/ conferência, mas não é transcrito automaticamente — digite a observação pra IA usar.
+          </p>
+        )}
       </div>
 
       <button className="btn-primary w-full text-base py-3" onClick={save} disabled={!!busy}>

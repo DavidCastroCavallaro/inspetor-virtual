@@ -1,4 +1,8 @@
 import { getActiveProjectId } from './project.js';
+import { localApi, getApiKey, setApiKey } from './localApi.js';
+
+export const STANDALONE = import.meta.env.VITE_STANDALONE === 'true';
+export { getApiKey, setApiKey };
 
 const BASE = '/api';
 
@@ -19,7 +23,15 @@ function withProject(url) {
   return pid ? `${url}?projectId=${encodeURIComponent(pid)}` : url;
 }
 
-export const api = {
+function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+
+const serverApi = {
   health: () => j('/health'),
 
   listProjects: () => j('/projects'),
@@ -33,11 +45,20 @@ export const api = {
   auditResult: (id, payload) => j(`/results/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   reset: () => j('/reset', { method: 'POST' }),
 
-  exportXlsxUrl: () => withProject(BASE + '/export/xlsx'),
-  exportPdfUrl: () => withProject(BASE + '/export/pdf'),
+  exportXlsx: async () => saveBlob(await (await fetch(withProject(BASE + '/export/xlsx'))).blob(), 'inventario_final.xlsx'),
+  exportPdf: async () => saveBlob(await (await fetch(withProject(BASE + '/export/pdf'))).blob(), 'relatorio_executivo.pdf'),
 };
 
+const standaloneApi = {
+  ...localApi,
+  exportXlsx: async () => saveBlob(await localApi.exportXlsxBlob(), 'inventario_final.xlsx'),
+  exportPdf: async () => saveBlob(await localApi.exportPdfBlob(), 'relatorio_executivo.pdf'),
+};
+
+export const api = STANDALONE ? standaloneApi : serverApi;
+
 export async function pingOnline() {
+  if (STANDALONE) return navigator.onLine;
   try {
     await fetch(BASE + '/health', { cache: 'no-store' });
     return true;

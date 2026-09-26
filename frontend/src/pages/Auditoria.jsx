@@ -55,8 +55,8 @@ export default function Auditoria({ online, projectId }) {
       </div>
 
       <div className="flex gap-2">
-        <a href={api.exportXlsxUrl()} className="btn-ghost flex-1">⬇️ Excel (.xlsx)</a>
-        <a href={api.exportPdfUrl()} className="btn-ghost flex-1">⬇️ Relatório PDF</a>
+        <button onClick={() => api.exportXlsx()} className="btn-ghost flex-1">⬇️ Excel (.xlsx)</button>
+        <button onClick={() => api.exportPdf()} className="btn-ghost flex-1">⬇️ Relatório PDF</button>
       </div>
       {msg && <p className="text-sm font-medium text-brand-dark">{msg}</p>}
 

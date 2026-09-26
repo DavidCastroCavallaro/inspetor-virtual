@@ -5,7 +5,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import Captura from './pages/Captura.jsx';
 import PreVistoria from './pages/PreVistoria.jsx';
 import Auditoria from './pages/Auditoria.jsx';
-import { api, pingOnline } from './lib/api.js';
+import { api, pingOnline, STANDALONE, getApiKey, setApiKey } from './lib/api.js';
 import { syncPending, refreshResultsFromServer, wipeLocalProject } from './lib/sync.js';
 import { getActiveProjectId, setActiveProjectId } from './lib/project.js';
 import { db } from './db.js';
@@ -25,6 +25,20 @@ export default function App() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [projErr, setProjErr] = useState('');
+
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [keySaved, setKeySaved] = useState(false);
+  useEffect(() => {
+    if (!STANDALONE) return;
+    getApiKey().then((k) => { setApiKeyInput(k); setKeySaved(!!k); });
+  }, []);
+  async function saveApiKey() {
+    await setApiKey(apiKeyInput);
+    setKeySaved(!!apiKeyInput.trim());
+    setMsg(apiKeyInput.trim() ? '✔ Chave salva neste navegador' : '✔ Chave removida — voltando ao modo mock');
+    await checkStatus();
+    setTimeout(() => setMsg(''), 3000);
+  }
 
   const reloadProjects = useCallback(async () => {
     try {
@@ -204,6 +218,28 @@ export default function App() {
                 )}
                 {projErr && <p className="text-xs text-red-600 px-2 pt-1">{projErr}</p>}
               </div>
+
+              {STANDALONE && (
+                <div className="border-t border-slate-100 mt-2 pt-2 px-2">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1">
+                    🔑 Chave da IA (Anthropic)
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="password"
+                      className="input flex-1 text-xs"
+                      placeholder="sk-ant-... (vazio = modo mock)"
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                    />
+                    <button className="btn-primary !px-3 text-xs" onClick={saveApiKey}>Salvar</button>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    {keySaved ? '✔ Salva só neste navegador.' : 'Sem chave = modo mock (custo zero).'} Nunca é enviada
+                    a nenhum servidor — só direto pra Anthropic ao processar.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
