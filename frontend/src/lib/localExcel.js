@@ -88,6 +88,7 @@ export function buildInventoryXlsxBlob(results) {
     'Estado de Conservação': r.estadoConservacao ? r.estadoConservacao.toUpperCase() : '',
     'Localização': r.localizacao,
     'Vida Útil Total (anos)': r.vidaUtilTotalAnos,
+    'Origem Vida Útil': r.vidaUtilOrigem === 'manual' ? 'Informada' : r.vidaUtilOrigem === 'ia' ? 'IA' : 'Tabela IBAPE',
     'Idade Estimada (anos)': r.idadeAnos,
     'Vida Remanescente (anos)': r.vidaRemanescenteAnos,
     'Depreciação (%)': r.depreciacaoPct,

@@ -2,13 +2,20 @@ import { config, isMock, visionProvider } from './config.js';
 
 /* ============ PROMPT ENXUTO (strict JSON, sem conversa) ============ */
 const SYSTEM_PROMPT =
-  'Voce e um agente de OCR industrial. Leia a placa do equipamento na imagem e a nota de voz do perito. ' +
+  'Voce e um agente de OCR industrial e de avaliacao de ativos. Leia a placa do equipamento na imagem, ' +
+  'a nota de voz do perito e a descricao do cadastro (se houver). ' +
   'Responda SOMENTE com JSON valido, sem markdown, sem texto extra. Campos ausentes = "". ' +
-  'Schema: {"fabricante":"","modelo":"","potencia":"","rpm":"","voltagem":"","numeroSerie":"","condicao":"Bom|Regular|Ruim","anoFabricacao":"","confianca":0.0}. ' +
-  'confianca = 0..1 (qualidade da leitura da placa).';
+  'Schema: {"fabricante":"","modelo":"","potencia":"","rpm":"","voltagem":"","numeroSerie":"","condicao":"Bom|Regular|Ruim","anoFabricacao":"","vidaUtilAnos":0,"confianca":0.0}. ' +
+  'confianca = 0..1 (qualidade da leitura da placa). ' +
+  'vidaUtilAnos = sua estimativa da vida util normal (anos) desse tipo/porte de equipamento industrial, ' +
+  'com base em pratica usual de avaliacao de maquinas e equipamentos (ex.: motor eletrico ~20, transformador ~25-40, ' +
+  'compressor ~20, bomba ~15, caldeira ~25-30); 0 se nao souber estimar.';
 
-function userText(transcript) {
-  return `Nota de voz do perito: "${transcript || '(sem audio)'}". Extraia os dados da placa.`;
+function userText(transcript, hint) {
+  const cadastro = hint?.expected
+    ? ` Cadastro esperado para este ativo: ${[hint.expected.descricao, hint.expected.fabricante, hint.expected.modelo].filter(Boolean).join(' / ')}.`
+    : '';
+  return `Nota de voz do perito: "${transcript || '(sem audio)'}".${cadastro} Extraia os dados da placa e estime a vida util.`;
 }
 
 /* ============ TRANSCRICAO DE VOZ ============ */
@@ -41,8 +48,8 @@ export async function extractFromPlate({ imageBase64, mime = 'image/jpeg', trans
   let out;
   try {
     out = provider === 'anthropic'
-      ? await callAnthropic(config.anthropic.fast, imageBase64, mime, transcript)
-      : await callGemini(config.gemini.fast, imageBase64, mime, transcript);
+      ? await callAnthropic(config.anthropic.fast, imageBase64, mime, transcript, hint)
+      : await callGemini(config.gemini.fast, imageBase64, mime, transcript, hint);
   } catch (e) {
     return { ...mockExtract(transcript, hint), provider: 'mock-fallback', error: String(e) };
   }
@@ -51,8 +58,8 @@ export async function extractFromPlate({ imageBase64, mime = 'image/jpeg', trans
   if ((out.confianca ?? 0) < config.confidenceThreshold) {
     try {
       const fb = config.anthropic.key
-        ? await callAnthropic(config.anthropic.fallback, imageBase64, mime, transcript)
-        : await callGemini(config.gemini.fallback, imageBase64, mime, transcript);
+        ? await callAnthropic(config.anthropic.fallback, imageBase64, mime, transcript, hint)
+        : await callGemini(config.gemini.fallback, imageBase64, mime, transcript, hint);
       fb.routedFallback = true;
       return fb;
     } catch { /* mantem resultado rapido */ }
@@ -61,14 +68,14 @@ export async function extractFromPlate({ imageBase64, mime = 'image/jpeg', trans
 }
 
 /* ---- Gemini ---- */
-async function callGemini(model, imageBase64, mime, transcript) {
+async function callGemini(model, imageBase64, mime, transcript, hint) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${config.gemini.key}`;
   const body = {
     system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
     contents: [{
       role: 'user',
       parts: [
-        { text: userText(transcript) },
+        { text: userText(transcript, hint) },
         { inline_data: { mime_type: mime, data: imageBase64 } },
       ],
     }],
@@ -82,7 +89,7 @@ async function callGemini(model, imageBase64, mime, transcript) {
 }
 
 /* ---- Anthropic ---- */
-async function callAnthropic(model, imageBase64, mime, transcript) {
+async function callAnthropic(model, imageBase64, mime, transcript, hint) {
   const body = {
     model,
     max_tokens: 350,
@@ -92,7 +99,7 @@ async function callAnthropic(model, imageBase64, mime, transcript) {
       role: 'user',
       content: [
         { type: 'image', source: { type: 'base64', media_type: mime, data: imageBase64 } },
-        { type: 'text', text: userText(transcript) },
+        { type: 'text', text: userText(transcript, hint) },
       ],
     }],
   };

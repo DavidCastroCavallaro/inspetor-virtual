@@ -92,7 +92,8 @@ export default function Auditoria({ online, projectId }) {
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {[
                     ['Patrimônio', r.patrimonio], ['Nº Série', r.numeroSerie], ['RPM', r.rpm], ['Voltagem', r.voltagem],
-                    ['Ano', r.anoFabricacao], ['Vida útil total', r.vidaUtilTotalAnos + 'a'],
+                    ['Ano', r.anoFabricacao],
+                    ['Vida útil total', `${r.vidaUtilTotalAnos}a (${{ manual: 'informada', ia: 'IA', tabela: 'tabela' }[r.vidaUtilOrigem] || 'tabela'})`],
                     ['Idade', r.idadeAnos + 'a'], ['Confiança IA', r.confianca != null ? Math.round(r.confianca * 100) + '%' : '—'],
                     ['Motor IA', r.ai?.visionProvider],
                   ].map(([k, v]) => (
@@ -150,6 +151,20 @@ export default function Auditoria({ online, projectId }) {
                 {r.estadoConservacao && (
                   <p className="text-[11px] text-slate-400">{estadoLabel(r.estadoConservacao)}</p>
                 )}
+
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-slate-500 shrink-0">Vida útil (anos):</label>
+                  <input
+                    type="number" min="1" step="1"
+                    className="input !py-1 text-xs flex-1"
+                    placeholder="deixe em branco = IA/tabela"
+                    defaultValue={r.vidaUtilManual || ''}
+                    onBlur={(e) => {
+                      const v = e.target.value ? Number(e.target.value) : null;
+                      if (v !== (r.vidaUtilManual || null)) act(r.id, { patch: { vidaUtilManual: v } });
+                    }}
+                  />
+                </div>
 
                 <textarea
                   className="input text-xs" rows={2} defaultValue={r.observacao}

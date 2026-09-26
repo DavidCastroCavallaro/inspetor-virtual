@@ -26,6 +26,7 @@ export default function Captura({ onSaved, projectId }) {
   const [audio, setAudio] = useState(null); // {base64,mime}
   const [obs, setObs] = useState('');
   const [estadoConservacao, setEstadoConservacao] = useState('');
+  const [vidaUtilManual, setVidaUtilManual] = useState('');
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState('');
   const camRef = useRef();
@@ -84,11 +85,12 @@ export default function Captura({ onSaved, projectId }) {
       audioMime: audio?.mime || null,
       observacao: obs,
       estadoConservacao: estadoConservacao || null,
+      vidaUtilManual: vidaUtilManual ? Number(vidaUtilManual) : null,
       localizacao: selected?.localizacao || '',
       status: 'pendente',
       capturedAt: new Date().toISOString(),
     });
-    setPhoto(null); setAudio(null); setObs(''); setHint(''); setEstadoConservacao(''); setBusy('');
+    setPhoto(null); setAudio(null); setObs(''); setHint(''); setEstadoConservacao(''); setVidaUtilManual(''); setBusy('');
     onSaved?.();
   }
 
@@ -223,6 +225,22 @@ export default function Captura({ onSaved, projectId }) {
         </select>
         <p className="text-[11px] text-slate-400">
           Sua avaliação direta (escala Heidecke/IBAPE) tem prioridade sobre a estimativa da IA no cálculo de vida útil.
+        </p>
+      </div>
+
+      <div className="card p-3 space-y-2">
+        <label className="text-sm font-semibold">⏳ Vida útil do ativo (opcional)</label>
+        <input
+          type="number" min="1" step="1"
+          className="input"
+          placeholder="deixe em branco para a IA estimar pela foto e pela descrição"
+          value={vidaUtilManual}
+          onChange={(e) => setVidaUtilManual(e.target.value)}
+        />
+        <p className="text-[11px] text-slate-400">
+          Se você souber a vida útil normal (anos), digite aqui — ela tem prioridade. Se deixar em branco, a IA
+          estima a partir da foto da placa, da sua observação e da descrição do ativo na planilha; sem isso, o app
+          usa uma tabela de referência (IBAPE) por tipo de equipamento.
         </p>
       </div>
 

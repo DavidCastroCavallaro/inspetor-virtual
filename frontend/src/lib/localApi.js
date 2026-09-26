@@ -117,9 +117,17 @@ export const localApi = {
       const descricao = m.matched?.descricao || `${extracted.fabricante} ${extracted.modelo}`.trim() || 'Ativo não cadastrado';
       const localizacao = m.matched?.localizacao || cap.localizacao || '';
 
+      let vidaUtilOverride = null, vidaUtilOrigem = null;
+      if (Number(cap.vidaUtilManual) > 0) {
+        vidaUtilOverride = Number(cap.vidaUtilManual); vidaUtilOrigem = 'manual';
+      } else if (Number(extracted.vidaUtilAnos) > 0) {
+        vidaUtilOverride = Number(extracted.vidaUtilAnos); vidaUtilOrigem = 'ia';
+      }
+
       const ev = evaluate({
         descricao, anoFabricacao: extracted.anoFabricacao, condicao: extracted.condicao,
         estadoConservacao: cap.estadoConservacao || null,
+        vidaUtilOverride, vidaUtilOrigem,
       });
 
       const row = {
@@ -127,6 +135,7 @@ export const localApi = {
         capturedAt: cap.capturedAt || new Date().toISOString(),
         codigo,
         patrimonio: m.matched?.patrimonio || '',
+        vidaUtilManual: Number(cap.vidaUtilManual) > 0 ? Number(cap.vidaUtilManual) : null,
         status: m.status,
         statusLabel: m.statusLabel,
         descricao,
@@ -178,8 +187,15 @@ export const localApi = {
     }
     if (patch && typeof patch === 'object') Object.assign(r, patch);
 
+    let vidaUtilOverride = null, vidaUtilOrigem = null;
+    if (Number(r.vidaUtilManual) > 0) {
+      vidaUtilOverride = Number(r.vidaUtilManual); vidaUtilOrigem = 'manual';
+    } else if (r.vidaUtilOrigem === 'ia' && Number(r.vidaUtilTotalAnos) > 0) {
+      vidaUtilOverride = Number(r.vidaUtilTotalAnos); vidaUtilOrigem = 'ia';
+    }
     Object.assign(r, evaluate({
       descricao: r.descricao, anoFabricacao: r.anoFabricacao, condicao: r.condicao, estadoConservacao: r.estadoConservacao,
+      vidaUtilOverride, vidaUtilOrigem,
     }));
     r.auditado = true;
     r.decisao = decisao || r.decisao;
